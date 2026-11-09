@@ -34,6 +34,7 @@
 #include "popup.h"
 #include "gettext.h"
 #include "obt/keyboard.h"
+#include "openbox/debug.h"
 
 #include <glib.h>
 
