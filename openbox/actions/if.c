@@ -88,6 +88,7 @@ typedef struct {
     GSList *thenacts;
     GSList *elseacts;
     GSList *noneacts;
+    gboolean linear;
 } Options;
 
 static gpointer setup_func(xmlNodePtr node);
@@ -244,6 +245,11 @@ static gpointer setup_func(xmlNodePtr node)
                              sizeof(Query*));
 
     xmlNodePtr n;
+
+    if ((n = obt_xml_find_node(node, "linear"))) {
+        o->linear = obt_xml_node_bool(n);
+    } else
+        o->linear = TRUE;
     if ((n = obt_xml_find_node(node, "then"))) {
         xmlNodePtr m;
 
@@ -477,11 +483,12 @@ static gboolean run_func_if_internal(ObActionsData *data, gpointer options)
 static gboolean run_func_foreach(ObActionsData *data, gpointer options)
 {
     GList *it;
+    Options *o = options;
 
     foreach_stop = FALSE;
     gboolean was_true = FALSE;
 
-    for (it = client_list; it; it = g_list_next(it)) {
+    for (it = (o->linear) ? client_list : focus_order; it; it = g_list_next(it)) {
         data->client = it->data;
         was_true |= run_func_if_internal(data, options);
         if (foreach_stop) {
@@ -491,7 +498,6 @@ static gboolean run_func_foreach(ObActionsData *data, gpointer options)
     }
 
     if (!was_true) {
-        Options *o = options;
         actions_run_acts(o->noneacts, data->uact, data->state,
                          data->x, data->y, data->button,
                          data->context, data->client);
